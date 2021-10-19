@@ -2,7 +2,7 @@ clear all; close all; clc
 
 % Set working directories.
 rootDir = '/Volumes/Seagate/wml/';
-remove = [];%[32];
+remove = [32];%[32];
 
 % Create date-specific file name that indicates how many subjects.
 datestring = '20211018';

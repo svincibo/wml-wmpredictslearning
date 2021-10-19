@@ -351,11 +351,6 @@ for f = 1:length(subfolders)
     
 end
 
-% Remove outliers.
-idx_above = find(data_recog.RT > (nanmean(data_recog.RT)+3*nanstd(data_recog.RT)));
-idx_below = find(data_recog.RT < (nanmean(data_recog.RT)-3*nanstd(data_recog.RT)));
-data_recog(cat(1, idx_above, idx_below), :) = [];
-
 data_tractprofiles_mean = d;
 
 writetable(d, fullfile(rootdir, 'wml-wmpredictslearning-supportFiles', 'WML_mri_data_tractprofiles_mean.csv'))

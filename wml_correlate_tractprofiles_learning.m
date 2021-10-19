@@ -25,7 +25,7 @@ acc = array2table(temp, 'VariableNames', {'subID', 'acc_day1', 'acc_day2', 'acc_
 acc = sortrows(acc);
 
 % Load writing data and remove outliers and sort by subID.
-datestring = '20211018';
+datestring = '20211019';
 filename = sprintf('WML_beh_data_write_wlearningrate_%s_n=%d_%s', fittype, n, datestring);
 load(fullfile(rootDir, 'wml-wmpredictslearning-supportFiles', filename), 'data_write', 'data_write_mean');
 
@@ -61,15 +61,16 @@ t_temp = cat(2, table2array(t(:, 1)), (table2array(t(:, 2:end))-nanmean(table2ar
 t = array2table(t_temp, 'VariableNames', t.Properties.VariableNames);
 
 % Delete all rows that contain NaN, for now. Columns first.
-idxc = [6 12 17]; %6, 12, and 17 correspond to day 5 test measurements
+idxc = [1 6 12 17]; % 1 is subID, 6, 12, and 17 correspond to day 5 test measurements
 t(:, idxc) = [];
-idxr = [1];% 2 3 8 9 13]; 
-% 1 is subID
-% 2 and 8 are subjs that did not complete all days of training
-% 3 and 8 have NaN for rightmdlfspl
-% 3, NaN for right mdlfang
-% 9 leftifof
-% 13 right ifof
+idxr = [3 5 8 9 13]; 
+
+% 2 and 8 are subjs that did not complete all days of training ~ subs 24 and 31
+% 3 and 8 have NaN for rightmdlfspl ~ subs 25 and 31
+% 3, NaN for right mdlfang, rightvof ~ sub 25
+% 5, NaN for right fat ~ sub 27
+% 9 leftifof ~ sub 32
+% 13 rightifof, leftuncinate ~ sub 42
 t(idxr, :) = [];
 
 % Correlations.
@@ -80,13 +81,24 @@ t(idxr, :) = [];
 % xlabels = t.Properties.VariableNames(2:end);
 % ylabels = t.Properties.VariableNames(2:13);
 
+lr_idx = 5;
+mt1_idx = 1;
+rt1_idx = 6;
+acc1_idx = 10;
+first_fa_idx = 14;
+first_t1t2_idx = 16;
+first_ndi_idx = 17;
+step = 6;
+corr_thresh = .3;
+
 % FA
 figure(7);
-mat = corr(table2array(t(:, [6, 15:6:end])));% % m = cat(2, table2array(mt(:, 2:end)), table2array(mri(:, 2:end)));
+mat = corr(table2array(t(:, [lr_idx, mt1_idx, rt1_idx, acc1_idx, 15:step:end])));% % m = cat(2, table2array(mt(:, 2:end)), table2array(mri(:, 2:end)));
+id=find(abs(mat(:))<corr_thresh); mat(id) = NaN;
 toplot = mat;
 imagesc(toplot); colorbar; caxis([-1 1]);
-xlabels = t.Properties.VariableNames([6, 15:6:end]);
-ylabels = t.Properties.VariableNames([6, 15:6:end]);
+xlabels = t.Properties.VariableNames([lr_idx, mt1_idx, rt1_idx, acc1_idx, first_fa_idx:step:end]);
+ylabels = t.Properties.VariableNames([lr_idx, mt1_idx, rt1_idx, acc1_idx, first_fa_idx:step:end]);
 
 % Set up plot and measure-specific details.
 capsize = 0;
@@ -135,11 +147,12 @@ title('FA')
 
 % t1t2
 figure(8);
-mat = corr(table2array(t(:, [6, 17:6:end])));% % m = cat(2, table2array(mt(:, 2:end)), table2array(mri(:, 2:end)));
+mat = corr(table2array(t(:, [lr_idx, mt1_idx, rt1_idx, acc1_idx, first_t1t2_idx:step:end])));% % m = cat(2, table2array(mt(:, 2:end)), table2array(mri(:, 2:end)));
+id=find(abs(mat(:))<corr_thresh); mat(id) = NaN;
 toplot = mat;
 imagesc(toplot); colorbar; caxis([-1 1]);
-xlabels = t.Properties.VariableNames([6, 17:6:end]);
-ylabels = t.Properties.VariableNames([6, 17:6:end]);
+xlabels = t.Properties.VariableNames([lr_idx, mt1_idx, rt1_idx, acc1_idx, first_t1t2_idx:step:end]);
+ylabels = t.Properties.VariableNames([lr_idx, mt1_idx, rt1_idx, acc1_idx, first_t1t2_idx:step:end]);
 
 % Set up plot and measure-specific details.
 capsize = 0;
@@ -188,11 +201,12 @@ title('t1/t2 ratio')
 
 % ndi
 figure(9);
-mat = corr(table2array(t(:, [6, 18:6:end])));% % m = cat(2, table2array(mt(:, 2:end)), table2array(mri(:, 2:end)));
+mat = corr(table2array(t(:, [lr_idx, mt1_idx, rt1_idx, acc1_idx, first_ndi_idx:step:end])));% % m = cat(2, table2array(mt(:, 2:end)), table2array(mri(:, 2:end)));
+id=find(abs(mat(:))<corr_thresh); mat(id) = NaN;
 toplot = mat;
 imagesc(toplot); colorbar; caxis([-1 1]);
-xlabels = t.Properties.VariableNames([6, 18:6:end]);
-ylabels = t.Properties.VariableNames([6, 18:6:end]);
+xlabels = t.Properties.VariableNames([lr_idx, mt1_idx, rt1_idx, acc1_idx, first_ndi_idx:step:end]);
+ylabels = t.Properties.VariableNames([lr_idx, mt1_idx, rt1_idx, acc1_idx, first_ndi_idx:step:end]);
 
 % Set up plot and measure-specific details.
 capsize = 0;
@@ -241,7 +255,7 @@ title('NDI')
 
 
 % Fit a linear model: Does wm predict mt at day 1?
-modelspec = 'learningrate~rightparc_fa';
+modelspec = 'mt_day1~leftvof_ndi';
 mdl = fitlm(t, modelspec);
 mdl.Coefficients
 anova(mdl, 'summary')
