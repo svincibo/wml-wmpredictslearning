@@ -2,7 +2,7 @@ clear all; close all; clc;
 
 % Set working directories.
 rootDir = '/Volumes/Seagate/wml/';
-testortestgen = 'test';
+testortestgen = 'testgen';
 
 % Get contents of the directory where the measures are stored.
 if strcmp(testortestgen, 'test')
@@ -161,11 +161,13 @@ for sub = 1:length(subjectlist)
             
             rt(sub, day) = NaN;
             acc(sub, day) = NaN;
+            lr(sub, day) = NaN;
 
         else
             
             rt(sub, day) = nanmean(data_recog.RT(idx));
             acc(sub, day) = sum(data_recog.acc(idx))/length(data_recog.acc(idx));
+            lr(sub, day) = sum(data_recog.acc(idx))/length(data_recog.acc(idx))-.5;
 
         end
     
@@ -174,6 +176,7 @@ for sub = 1:length(subjectlist)
 end
 A = cat(2, subjectlist, rt);
 B = cat(2, subjectlist, acc);
+C = cat(2, subjectlist, lr);
 
 % Remove NaN columns and rows.
 A = A(:,any(~isnan(A)));  % for columns
@@ -182,6 +185,9 @@ clear A;
 B = B(:,any(~isnan(B)));  % for columns
 data_recog_acc_mean = array2table(B(any(~isnan(B),2),:));   %for rows
 clear B;
+C = C(:,any(~isnan(C)));  % for columns
+data_recog_lr_mean = array2table(C(any(~isnan(C),2),:));   %for rows
+clear C;
 
 % Create date-specific file name that indicates how many subjects.
 filename = sprintf('WML_beh_data_recog_%s_%s', testortestgen, datestr(now,'yyyymmdd'));
@@ -193,4 +199,5 @@ save(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-support
 writetable(data_recog, fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-supportFiles', [filename '.csv']))
 writetable(data_recog_rt_mean, fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-supportFiles', [filename '_rt_mean.csv']))
 writetable(data_recog_acc_mean, fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-supportFiles', [filename '_acc_mean.csv']))
+writetable(data_recog_lr_mean, fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-supportFiles', [filename '_lr_mean.csv']))
 

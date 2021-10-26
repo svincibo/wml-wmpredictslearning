@@ -2,10 +2,10 @@ clear all; close all; clc
 
 % Set working directories.
 rootDir = '/Volumes/Seagate/wml/';
-remove = [32];%[32];
+remove = [];%[32];
 
 % Create date-specific file name that indicates how many subjects.
-datestring = '20211018';
+datestring = '20211026';
 
 % Load test data.
 testortestgen = 'test'; %'test' or 'test_gen'
@@ -42,7 +42,11 @@ xticklength = 0.05;
 ylimlo = -0.1; ylimhi = 0.12;
 
 % Get individual subject means for each day.
-subjectlist = unique(test.subID(find(test.subID ~= remove)));
+if ~isempty(remove)
+    subjectlist = unique(test.subID(find(test.subID ~= remove)));
+else
+    subjectlist = unique(test.subID)
+end
 for sub = 1:length(subjectlist)
     
     for day = 1:length(unique(test.day))
@@ -136,9 +140,10 @@ pbaspect([1 1 1])
 
 % Write.
 % if strcmp(save_figures, 'yes')
-    
-    print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', 'plot_recog_genability_rt'), '-dpng')
-    print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', 'eps', 'plot_recog_genability_rt'), '-depsc')
+    n = size(rt, 1);
+
+    print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', ['plot_recog_genability_rt_n=' num2str(n)]), '-dpng')
+    print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', 'eps', ['plot_recog_genability_rt_n=' num2str(n)]), '-depsc')
     
 % end
 
@@ -217,13 +222,30 @@ pbaspect([1 1 1])
 
 % Write.
 % if strcmp(save_figures, 'yes')
-    
-    print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', 'plot_recog_genability_acc'), '-dpng')
-    print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', 'eps', 'plot_recog_genability_acc'), '-depsc')
+        n = size(acc, 1);
+
+    print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', ['plot_recog_genability_acc_n='  num2str(n)]), '-dpng')
+    print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', 'eps', ['plot_recog_genability_acc_n='  num2str(n)]), '-depsc')
     
 % end
 
 hold off;
 
 % clear data_recog
+
+% Concatenate to save out as table.
+data_recog_genability_acc = acc;
+data_recog_genability_rt = rt;
+n = size(data_recog_genability_acc, 1);
+% Create date-specific file name that indicates how many subjects.
+filename = sprintf('WML_beh_data_recog_genability_n=%d_%s', n, datestr(now,'yyyymmdd'));
+
+% Save all variables.
+save(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-supportFiles', filename), 'data_recog_genability_acc', 'data_recog_genability_rt');
+
+% Save as a CSV files.
+writematrix(data_recog_genability_acc, fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-supportFiles', [filename '_acc_n=' num2str(n) '.csv']))
+writematrix(data_recog_genability_rt, fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-supportFiles', [filename '_rt_n=' num2str(n) '.csv']))
+
+
 

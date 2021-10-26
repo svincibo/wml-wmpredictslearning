@@ -4,7 +4,7 @@ clear all; close all; clc
 rootDir = '/Volumes/Seagate/wml/';
 
 % Create date-specific file name that indicates how many subjects.
-datestring = '20211019';
+datestring = '20211026';
 remove = []; %[22 27 35 41 60 62];
 filename = sprintf('wml_beh_data_write_%s', datestring);
 
@@ -17,11 +17,14 @@ load(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-support
 keep = find(~ismember(data_write.subID, remove));
 data_write = data_write(keep, :);
 
-% Sort by subID, then by day, then by trial.
+% Sort by subID, then by day, then by block, then by trial.
 mt = sortrows(data_write, [1 3 5 6]);
 
 % Remove day 5 for now.
 mt = mt(find(mt.day ~= 5), :);
+
+% % Use day 1 only for now.
+mt = mt(find(mt.day == 1), :);
 
 % Add overall trial counter.
 mt.idx = transpose(1:size(mt, 1));
@@ -134,9 +137,9 @@ a.YLabel.FontAngle = fontangle;
 a.XLabel.String = 'Trial Number';
 a.XLabel.FontSize = fontsize;
 pbaspect([1 1 1])
-
-print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', 'plot_write_scatter'), '-dpng')
-print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', 'eps', 'plot_write_scatter'), '-depsc')
+n = length(subjectlist);
+print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', ['plot_write_scatter_n=' num2str(n)]), '-dpng')
+print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', 'eps', ['plot_write_scatter_n=' num2str(n)]), '-depsc')
 
 hold off;
 

@@ -4,7 +4,7 @@ clear all; close all; clc
 rootDir = '/Volumes/Seagate/wml/';
 
 % Create date-specific file name that indicates how many subjects.
-datestring = '20211019';
+datestring = '20211022';
 remove = [];%[22 27 35 41 60 62];
 filename = sprintf('wml_beh_data_write_%s', datestring);
 

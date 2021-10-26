@@ -1,8 +1,5 @@
 clear all; close all; clc;
 
-% Set working directories.
-rootDir = '/Volumes/Seagate/wml/wml-wmpredictslearning';
-
 % Identify outliers for removal.
 remove = [27 32]; 
 % MRI
@@ -10,6 +7,7 @@ remove = [27 32];
 % 27 has severe motion
 % 24, 31 withdrew mid-training, so multi-day learningrate is not accurate
 % (but day 1 learning rate is accurate) 
+% 22 missing left CST
 % 3, NaN for rightmdlfspl, rightmdlfang, rightvof ~ sub 25
 % 7, NaN for rightmdlfspl ~ sub 31
 % 8, NaN for leftifof ~ sub 32
@@ -21,6 +19,86 @@ remove = [27 32];
 % 32 had 0% accuracy by day 4 
 % 50 missing day 3, experimenter error
 % 66 in progress, as of 10/26/21
+
+% Set working directories.
+rootdir = '/Volumes/Seagate/wml/wml-wmpredictslearning';
+
+% Find all subject folders in the tractprofiles directory (generated with wml_datacat_tractprofiles_pca.m).
+subfolders = dir(fullfile(rootdir, 'wml-wmpredictslearning-supportFiles', 'tractprofiles'));
+
+% Remove the '.' and '..' files.
+subfolders = subfolders(arrayfun(@(x) x.name(1), subfolders) ~= '.');
+
+% Keep only names that are csv files.
+subfolders = subfolders(arrayfun(@(x) x.name(end), subfolders) == 'v');
+
+% Perform PCA on each subjects white matter data.
+for s = 2:size(subfolders, 1)
+        
+    % Grab demographics data.
+    subID = str2num(subfolders(s).name(end-5:end-4));
+    
+    % Read in white matter data for this subject.
+    d = readtable(fullfile(subfolders(s).folder, subfolders(s).name));
+        
+    % Prepare data for PCA by converting to matrix and removing NaN columns.
+    dmat = table2array(d);
+    keep = find(all(~isnan(dmat)));
+    d = d(:, keep);
+    dmat = dmat(:, keep);
+    
+    % Get tract names.
+    tractnames = d.Properties.VariableNames;
+    
+    % Check that the difference in variance of different columns is not very large.
+    bar(var(dmat));
+    
+    % PCA: Most of the time it seems large, so will default to scaling the data (i.e, weighted).
+    w = 1./var(dmat);
+%     [wcoeff, score, latent, tsquared, explained] = pca(dmat, 'NumComponents', 10, 'VariableWeights', w, 'Rows', 'pairwise', 'Economy', true);
+        [wcoeff, score, latent, tsquared, explained] = pca(dmat, 'VariableWeights', w, 'Rows', 'pairwise', 'Economy', true);
+
+    % Scree plot: latent contains the eigenvalues
+    figure(1)
+    plot(latent(1:10), 'o', 'LineStyle', '-', 'Color', 'b');
+    ylabel('eigenvalue')
+    xlabel('principle component')
+
+    % Just use first three principle components for now.
+    
+    % Compute coefficients.
+    c3 = wcoeff(:, 1:3);
+    
+    % Transform coefficients so that they are orthonormal.
+    coefforth = diag(sqrt(w))*wcoeff;
+    
+%     % Check that they are, indeed, orthonormal.
+%     I = coefforth'*coefforth;
+%     I(1:3,1:3)
+
+% Component scores
+cscores = zscore(dmat)*coefforth;
+
+
+figure(2)
+pareto(explained)
+xlabel('Principal Component')
+ylabel('Variance Explained (%)')
+
+figure(3)
+plot(cscores(:,1),cscores(:,2),'+')
+xlabel('1st Principal Component')
+ylabel('2nd Principal Component')   
+
+figure(4)
+plot3(cscores(:,1),cscores(:,2),cscores(:, 3),'+')
+xlabel('1st Principal Component')
+ylabel('2nd Principal Component')   
+zlabel('3rd Principal Component')   
+    
+end
+
+
 
 % Load recog data and remove outliers and sort by subID.
 datestring = '20211026';

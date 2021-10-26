@@ -3,10 +3,10 @@ clear all; close all; clc
 % Set working directories.
 rootDir = '/Volumes/Seagate/wml/';
 remove = []; %[27 32 35 40];
-testortestgen = 'test'; %'test' or 'test_gen'
+testortestgen = 'testgen'; %'test' or 'test_gen'
 
 % Create date-specific file name that indicates how many subjects.
-datestring = '20211018';
+datestring = '20211026';
 filename = sprintf('wml_beh_data_recog_%s_%s', testortestgen, datestring);
 
 % Load data.

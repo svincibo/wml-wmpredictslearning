@@ -3,27 +3,95 @@ clear all; close all; clc
 
 % Set working directories.
 rootDir = '/Volumes/Seagate/wml/';
-remove = []; %[27 32 35 40];
+remove = []; 
+% 24 have only day 1 data
+% 31 have only day 1 and day 2 data
+% 32 had 0% accuracy by day 4 
+% 50 missing day 3, experimenter error
+% 66 in progress, as of 10/26/21
+
 testortestgen = 'test'; %'test' or 'test_gen'
+fittype = 'poly1'; % exp2, poly1
 
 % Create date-specific file name that indicates how many subjects.
-datestring = '20211015';
+datestring = '20211026';
 filename = sprintf('wml_beh_data_recog_%s_%s', testortestgen, datestring);
 
 % Load data.
 load(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-supportFiles', filename), 'data_recog', 'data_recog_rt_mean', 'data_recog_acc_mean');
 
-% Remove outliers.
-keep = find(~ismember(data_recog_rt_mean.Var1, remove));
-subjectlist = data_recog_rt_mean.Var1(keep);
+% Remove subject outliers.
+keep = find(~ismember(data_recog.subID, remove));
+data_recog = data_recog(keep, :);
 
-rt = table2array(data_recog_rt_mean(keep, 2:end));
-acc = table2array(data_recog_acc_mean(keep, 2:end));
+% Sort by subID, then by day, then by trial.
+recog = sortrows(data_recog, [1 7 3]);
 
-alphastat = 0.66; % to return 1 SD, for 95% CI use .05
+% Also, keep only RTs for accurate responses -- trying out true positives for now.
+recog = recog(find(recog.truepositive == 1), :);
 
-color_DI = [0.8500 0.3250 0.0980]; %orange 
-coloralpha = .05;
+% Remove day 5 for now.
+recog = recog(find(recog.day ~= 5), :);
+
+% % Use day 1 only for now.
+% recog = recog(find(recog.day == 1), :);
+
+% Add overall trial counter.
+recog.idx = transpose(1:size(recog, 1));
+
+% Remove outliers based on subject/day means and timeouts -- right now assumed timeout if RT = 1. 
+idx_remove = [];
+subjectlist = unique(recog.subID);
+subjectlist = subjectlist(~isnan(subjectlist));
+for s = 1:length(subjectlist)
+    
+    % Find idx for this subject.
+    sidx = find(recog.subID == subjectlist(s));
+    
+    if ~isempty(sidx)
+        
+        % Add overal trial counter for this subject.
+        recog.trial_all(sidx(1):sidx(end)) = transpose(1:length(sidx));
+        
+        for d = 1:4
+            
+            didx = find(recog.subID == subjectlist(s) & recog.day == d);
+            
+            datanow = recog.RT(didx, :);
+            m = nanmean(datanow); sd = nanstd(datanow);
+            
+            % Get lower and upper bound.
+            idx_above = find(datanow > m+3*sd | datanow >= 1);
+            idx_below = find(datanow < m-3*sd);
+            % Remove outliers.
+            if ~isempty(idx_above) | ~isempty(idx_below)
+                idx = didx(cat(1, idx_above, idx_below), :);
+            end
+            
+            % Remove
+            if exist('idx')
+                
+                idx_remove = cat(1, idx_remove, idx);
+                clear idx;
+                
+            end
+            
+        end
+        
+    end
+    
+end
+clear datanow d didx;
+% Remove the outliers.
+recog(idx_remove, :) = [];
+
+% Remove NaNs.
+recog = recog(~isnan(recog.RT), :);
+
+%% Plot scatter plot of individual data -- with all outliers removed.
+
+% Plot trial x rt.
+gscatter(recog.trial_all, recog.RT, recog.subID)
 
 % Set up plot and measure-specific details.
 capsize = 0;
@@ -31,76 +99,28 @@ marker = 'o';
 linewidth = 1.5;
 linestyle = 'none';
 markersize = 100;
-xtickvalues = [1 2 3 4];
-xlim_lo = min(xtickvalues)-0.5; xlim_hi = max(xtickvalues)+0.5;
+xtickvalues = 1:160;
+xlim_lo = min(xtickvalues); xlim_hi = max(xtickvalues);
 fontname = 'Arial';
-fontsize = 20;
+fontsize = 15;
 fontangle = 'italic';
 yticklength = 0;
 xticklength = 0.05;
+coloralpha = .05;
 
-ylimlo = 0.5; ylimhi = 0.75;
-
-% % Get individual subject means for each day.
-% subjectlist = unique(data_recog.subID(find(~ismember(data_recog.subID, remove))));
-% for sub = 1:length(subjectlist)
-%     
-%     for day = 1:length(unique(data_recog.day))
-%     
-%         clear idx;
-%         idx = find(data_recog.subID == subjectlist(sub) & data_recog.day == day);
-%         
-%         if isempty(idx)
-%             
-%             rt(sub, day) = NaN;
-%             acc(sub, day) = NaN;
-% 
-%         else
-%             
-%             rt(sub, day) = nanmean(data_recog.RT(idx));
-%             acc(sub, day) = sum(data_recog.acc(idx))/length(data_recog.acc(idx));
-% 
-%         end
-%     
-%     end
-%     
-% end
-
-%% Plot means and standard deviations, but including individual data.
-clr = [randi(255, [10, 1]) randi(255, [10, 1]) randi(255, [10, 1])]./255;
-figure(1)
-hold on;
-
-% Calculate mean and standard deviation across-subject, within-day.
-DI_mean_rt = [nanmean(rt(:, 1)) nanmean(rt(:, 2)) nanmean(rt(:, 3)) nanmean(rt(:, 4))] ;
-% DI_std_rt = [nanstd(rt(:, 1)) nanstd(rt(:, 2)) nanstd(rt(:, 3)) nanstd(rt(:, 4))] ;
-
-% Plot means (do this first for legend and then second to keep it on top layer).
-xval = linspace(1, length(DI_mean_rt), length(DI_mean_rt));
-% scatter(xval, DI_mean, 'Marker', 'o', 'SizeData', 2*markersize, 'MarkerFaceColor', color_DI, 'MarkerEdgeColor', color_DI)
-
-% Individual data points for DI.
-gscatter(repmat(1, [size(rt, 1) 1]), rt(:, 1), subjectlist, clr)
-gscatter(repmat(2, [size(rt, 1) 1]), rt(:, 2), subjectlist, clr)
-gscatter(repmat(3, [size(rt, 1) 1]), rt(:, 3), subjectlist, clr)
-gscatter(repmat(4, [size(rt, 1) 1]), rt(:, 4), subjectlist, clr)
-
-% Means (second time to put it on top layer).
-scatter(xval, DI_mean_rt, 'Marker', 'o', 'SizeData', 2*markersize, 'MarkerFaceColor', color_DI, 'MarkerEdgeColor', color_DI)
-errorbar(xval, DI_mean_rt, DI_std_rt, 'Color', color_DI, 'LineWidth', linewidth, 'LineStyle', linestyle, 'CapSize', capsize);
+ylimlo = .4; ylimhi = 1.0;
 
 % xaxis
 xax = get(gca, 'xaxis');
 xax.Limits = [xlim_lo xlim_hi];
-xax.TickValues = xtickvalues;
-xax.TickDirection = 'out';
-xax.TickLength = [xticklength xticklength];
-xlabels = {'Day 1', 'Day 2', 'Day 3', 'Day 4'};
-% xlabels = cellfun(@(x) strrep(x, ' ', '\newline'), xlabels, 'UniformOutput', false);
+xax.TickValues = [40 80 120 160];
+% xax.TickDirection = 'out';
+% xax.TickLength = [xticklength xticklength];
+xlabels = {'40', '80', '120', '160'};
+% % xlabels = cellfun(@(x) strrep(x, ' ', '\newline'), xlabels, 'UniformOutput', false);
 xax.TickLabels = xlabels;
 xax.FontName = fontname;
 xax.FontSize = fontsize;
-xax.FontAngle = fontangle;
 
 % yaxis
 yax = get(gca,'yaxis');
@@ -111,119 +131,144 @@ yax.TickLength = [yticklength yticklength];
 yax.TickLabels = {num2str(ylimlo, '%2.2f'), num2str((ylimlo+ylimhi)/2, '%2.2f'), num2str(ylimhi, '%2.2f')};
 yax.FontName = fontname;
 yax.FontSize = fontsize;
+yax.FontAngle = fontangle;
 
 % general
 a = gca;
 %     a.TitleFontWeight = 'normal';
 box off
+%
+legend('off')
 
-if strcmp(testortestgen, 'test')
-    title({'Test'; '(typed symbols)'})
-else
-    title({'Generalization'; '(variable symbols)'})
-end
-
-legend('Location', 'eastoutside')
-legend('boxoff');
-
-a.YLabel.String = 'Reaction Time (seconds)';
+a.YLabel.String = 'Draw Duration Per Symbol (seconds)';
 a.YLabel.FontSize = fontsize;
 a.YLabel.FontAngle = fontangle;
+a.XLabel.String = 'Trial Number';
+a.XLabel.FontSize = fontsize;
 pbaspect([1 1 1])
-
-%     pos=get(gca,'Position');
-%     pos1=pos-[0 .02 0 0];
-%     set(gca,'Position', pos1);
-
-% Write.
-% if strcmp(save_figures, 'yes')
-    
-    print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', ['plot_recog_' testortestgen '_rt']), '-dpng')
-    print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', 'eps', ['plot_recog_' testortestgen '_rt']), '-depsc')
-    
-% end
+n = length(subjectlist);
+print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', ['plot_recog_scatter_n=' num2str(n)]), '-dpng')
+print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', 'eps', ['plot_recog_scatter_n=' num2str(n)]), '-depsc')
 
 hold off;
 
-%% Accuracy, letters: Plot means, but including individual data.
-figure(2)
-hold on;
+%% Fit a double exponential to each person's MT data to get learning rate.
 
-ylimlo = 0.5; ylimhi = 1;
+co = colormap('lines');
+steps = floor(size(co, 1)/length(subjectlist));
+c = co(1:steps:end, :);
 
-% Calculate mean and standard deviation across-subject, within-day.
-DI_mean_acc = [nanmean(acc(:, 1)) nanmean(acc(:, 2)) nanmean(acc(:, 3)) nanmean(acc(:, 4))] ;
-DI_std_acc = [nanstd(acc(:, 1)) nanstd(acc(:, 2)) nanstd(acc(:, 3)) nanstd(acc(:, 4))] ;
+% One subject at a time: Estimate learning rate by fitting a double exponential function,
+% Kahn et al., 2017, Cerebral Cortex.
 
-% Plot means (do this first for legend and then second to keep it on top layer).
-xval = linspace(1, length(DI_mean_acc), length(DI_mean_acc));
-% scatter(xval, DI_mean, 'Marker', 'o', 'SizeData', 2*markersize, 'MarkerFaceColor', color_DI, 'MarkerEdgeColor', color_DI)
+% % Just for now, do this only for day 1.
+% didx = find(mt.day == 1);
+% mt = mt(didx, :);
 
-% Individual data points for DI.
-gscatter(repmat(1, [size(acc, 1) 1]), acc(:, 1), subjectlist, clr)
-gscatter(repmat(2, [size(acc, 1) 1]), acc(:, 2), subjectlist, clr)
-gscatter(repmat(3, [size(acc, 1) 1]), acc(:, 3), subjectlist, clr)
-gscatter(repmat(4, [size(acc, 1) 1]), acc(:, 4), subjectlist, clr)
-
-% Means (second time to put it on top layer).
-scatter(xval, DI_mean_acc, 'Marker', 'o', 'SizeData', 2*markersize, 'MarkerFaceColor', color_DI, 'MarkerEdgeColor', color_DI)
-errorbar(xval, DI_mean_acc, DI_std_acc, 'Color', color_DI, 'LineWidth', linewidth, 'LineStyle', linestyle, 'CapSize', capsize);
-
-% xaxis
-xax = get(gca, 'xaxis');
-xax.Limits = [xlim_lo xlim_hi];
-xax.TickValues = xtickvalues;
-xax.TickDirection = 'out';
-xax.TickLength = [xticklength xticklength];
-xlabels = {'Day 1', 'Day 2', 'Day 3', 'Day 4'};
-% xlabels = cellfun(@(x) strrep(x, ' ', '\newline'), xlabels, 'UniformOutput', false);
-xax.TickLabels = xlabels;
-xax.FontName = fontname;
-xax.FontSize = fontsize;
-xax.FontAngle = fontangle;
-
-% yaxis
-yax = get(gca,'yaxis');
-yax.Limits = [ylimlo ylimhi];
-yax.TickValues = [ylimlo (ylimlo+ylimhi)/2 ylimhi];
-yax.TickDirection = 'out';
-yax.TickLength = [yticklength yticklength];
-yax.TickLabels = {num2str(ylimlo, '%2.2f'), num2str((ylimlo+ylimhi)/2, '%2.2f'), num2str(ylimhi, '%2.2f')};
-yax.FontName = fontname;
-yax.FontSize = fontsize;
-
-% general
-a = gca;
-%     a.TitleFontWeight = 'normal';
-box off
-
-if strcmp(testortestgen, 'test')
-    title({'Test'; '(typed symbols)'})
-else
-    title({'Generalization'; '(variable symbols)'})
+for s = 1:length(subjectlist)
+    
+    % Find idx for this subject.
+    sidx = find(recog.subID == subjectlist(s));
+        
+    % Extract data for this fit.
+    y = recog.RT(sidx, :);
+    x = recog.trial_all(sidx, :);
+    d = recog.day(sidx, :);
+    
+%     % Regress out effect of day.
+%     [f, f2] = fit(d, y, 'poly1'); %, 'Robust', 'Lar');
+%     y_resid = y - f.p1*d;
+    
+    % Fit.
+    [f, f2] = fit(x, y, fittype); %, 'Robust', 'Lar');
+    
+    % Collect the learning rate.
+    if strcmp(fittype, 'exp2')
+        
+        kappa = f.d;
+        lambda = f.b;
+        learningrate(s) = kappa;
+        
+    elseif strcmp(fittype, 'poly1')
+        
+        learningrate(s) = f.p1;
+        
+    end
+ 
+    figure(s)
+    
+    % Plot fit.
+    p=plot(f, x, y);
+    hold on;
+    
+    % Customize scatter plot of data.
+    p(1).Color = c(s, :);
+    
+    % Customize line plot of data.
+    p(2).Color = c(s, :);
+    p(2).LineWidth = 1;
+    
+    title(['Participant ' num2str(subjectlist(s)) ', ' fittype ', adjr2 = ' num2str(f2.adjrsquare) ', rmse = ' num2str(f2.rmse)]);
+    
+    % xaxis
+    xax = get(gca, 'xaxis');
+    xax.Limits = [xlim_lo xlim_hi];
+    xax.TickValues = [40 80 120 160];
+    % xax.TickDirection = 'out';
+    % xax.TickLength = [xticklength xticklength];
+    xlabels = {'40', '80', '120', '160'};
+    % % xlabels = cellfun(@(x) strrep(x, ' ', '\newline'), xlabels, 'UniformOutput', false);
+    xax.TickLabels = xlabels;
+    xax.FontName = fontname;
+    xax.FontSize = fontsize;
+    
+    % yaxis
+    yax = get(gca,'yaxis');
+    yax.Limits = [ylimlo ylimhi];
+    yax.TickValues = [ylimlo (ylimlo+ylimhi)/2 ylimhi];
+    yax.TickDirection = 'out';
+    yax.TickLength = [yticklength yticklength];
+    yax.TickLabels = {num2str(ylimlo, '%2.2f'), num2str((ylimlo+ylimhi)/2, '%2.2f'), num2str(ylimhi, '%2.2f')};
+    yax.FontName = fontname;
+    yax.FontSize = fontsize;
+    yax.FontAngle = fontangle;
+    
+    % general
+    a = gca;
+    %     a.TitleFontWeight = 'normal';
+    box off
+    %
+    legend('off')
+    
+    a.YLabel.String = 'RT Per Symbol (seconds)';
+    a.YLabel.FontSize = fontsize;
+    a.YLabel.FontAngle = fontangle;
+    a.XLabel.String = 'Trial Number';
+    a.XLabel.FontSize = fontsize;
+    pbaspect([1 1 1])
+    
+    print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', ['plot_rt_scatter_fit' fittype '_sub' num2str(subjectlist(s))]), '-dpng')
+    print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', 'eps', ['plot_rt_scatter_fit' fittype '_sub' num2str(subjectlist(s))]), '-depsc')
+    
+    hold off;
+    
 end
 
-% legend({'Draw Ink', 'Draw No Ink', 'Watch Dynamic'}, 'Location', 'southeast', 'Orientation', 'vertical', 'FontSize', fontsize);
-% legend('boxoff');
+% Remove subs from data_recog_rt_mean who were not in this rt analysis.
+keep = find(~ismember(data_recog_rt_mean.Var1, remove));
+data_recog_rt_mean = data_recog_rt_mean(keep, :);
+n = size(data_recog_rt_mean, 1);
 
-a.YLabel.String = 'Accuracy (percentage)';
-a.YLabel.FontSize = fontsize;
-a.YLabel.FontAngle = fontangle;
-pbaspect([1 1 1])
+% Concatenate learning rate to data_write_mean.
+data_recog_rt_mean = sortrows(data_recog_rt_mean, 1);
+data_recog_rt_mean.learningrate = learningrate';
 
-%     pos=get(gca,'Position');
-%     pos1=pos-[0 .02 0 0];
-%     set(gca,'Position', pos1);
+% Create date-specific file name that indicates how many subjects.
+filename = sprintf('WML_beh_data_recog_rt_wlearningrate_%s_n=%d_%s', fittype, size(data_recog_rt_mean, 1), datestr(now,'yyyymmdd'));
 
-% Write.
-% if strcmp(save_figures, 'yes')
-    
-    print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', ['plot_recog_' testortestgen '_acc']), '-dpng')
-    print(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-plots', 'eps', ['plot_recog_' testortestgen '_acc']), '-depsc')
-    
-% end
+% Save all variables.
+save(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-supportFiles', filename), 'data_recog', 'data_recog_rt_mean');
 
-hold off;
-
-% clear data_recog
-
+% Save as a CSV files.
+writetable(data_recog, fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-supportFiles', [filename '.csv']))
+writetable(data_recog_rt_mean, fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-supportFiles', [filename '_mean.csv']))
