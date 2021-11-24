@@ -190,7 +190,7 @@ data_recog_lr_mean = array2table(C(any(~isnan(C),2),:));   %for rows
 clear C;
 
 % Create date-specific file name that indicates how many subjects.
-filename = sprintf('WML_beh_data_recog_%s_%s', testortestgen, datestr(now,'yyyymmdd'));
+filename = sprintf('wml_beh_data_recog_%s_%s', testortestgen, datestr(now,'yyyymmdd'));
 
 % Save all variables.
 save(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-supportFiles', filename), 'data_recog', 'data_recog_rt_mean', 'data_recog_acc_mean');

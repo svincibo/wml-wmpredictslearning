@@ -1,12 +1,12 @@
 clear all; close all; clc;
 
 % Identify outliers for removal.
-remove = [27 32]; 
+remove = [27 32];
 % MRI
 % 32, 33, 35, 41 have spike artifacts
 % 27 has severe motion
 % 24, 31 withdrew mid-training, so multi-day learningrate is not accurate
-% (but day 1 learning rate is accurate) 
+% (but day 1 learning rate is accurate)
 % 22 missing left CST
 % 3, NaN for rightmdlfspl, rightmdlfang, rightvof ~ sub 25
 % 7, NaN for rightmdlfspl ~ sub 31
@@ -16,7 +16,7 @@ remove = [27 32];
 % Training
 % 24 have only day 1 data
 % 31 have only day 1 and day 2 data
-% 32 had 0% accuracy by day 4 
+% 32 had 0% accuracy by day 4
 % 50 missing day 3, experimenter error
 % 66 in progress, as of 10/26/21
 
@@ -32,46 +32,71 @@ subfolders = subfolders(arrayfun(@(x) x.name(1), subfolders) ~= '.');
 % Keep only names that are csv files.
 subfolders = subfolders(arrayfun(@(x) x.name(end), subfolders) == 'v');
 
+count = 1;
 % Perform PCA on each subjects white matter data.
 for s = 2:size(subfolders, 1)
-        
+    
     % Grab demographics data.
     subID = str2num(subfolders(s).name(end-5:end-4));
     
     % Read in white matter data for this subject.
     d = readtable(fullfile(subfolders(s).folder, subfolders(s).name));
-        
-    % Prepare data for PCA by converting to matrix and removing NaN columns.
-    dmat = table2array(d);
-    keep = find(all(~isnan(dmat)));
-    d = d(:, keep);
-    dmat = dmat(:, keep);
+    if size(d, 2) == 61
+        dmat(count, :) = nanmean(table2array(d), 1);
+        count = count + 1;
+    end
     
-    % Get tract names.
-    tractnames = d.Properties.VariableNames;
+    if s == size(subfolders, 1)
+    else
+        clear d;
+    end
     
-    % Check that the difference in variance of different columns is not very large.
-    bar(var(dmat));
-    
-    % PCA: Most of the time it seems large, so will default to scaling the data (i.e, weighted).
-    w = 1./var(dmat);
+end
+
+% Prepare data for PCA by converting to matrix and removing NaN columns.
+%     dmat = table2array(d);
+%     keep = find(all(~isnan(dmat)));
+%     d = d(:, keep);
+%     dmat = dmat(:, keep)';
+
+%     % for node x tract
+%     for k = 1:size(dmat, 2)
+%         dmatz(:, k) = (dmat(:, k) - nanmean(dmat(:, k)))/nanstd(dmat(:, k));
+%     end
+%     clear dmat; dmat = dmatz; clear dmatz;
+
+% for tract x node
+%     for k = 1:size(dmat, 1)
+%         dmatz(k, :) = (dmat(k, :) - nanmean(dmat(k, :)))/nanstd(dmat(k, :));
+%     end
+%     clear dmat; dmat = dmatz; clear dmatz;
+%
+%     % Get tract names.
+tractnames = d.Properties.VariableNames;
+dmat(1, 9) = .5;
+
+%     % Check that the difference in variance of different columns is not very large.
+%     bar(var(dmat));
+
+% PCA: Most of the time it seems large, so will default to scaling the data (i.e, weighted).
+w = 1./var(dmat);
 %     [wcoeff, score, latent, tsquared, explained] = pca(dmat, 'NumComponents', 10, 'VariableWeights', w, 'Rows', 'pairwise', 'Economy', true);
-        [wcoeff, score, latent, tsquared, explained] = pca(dmat, 'VariableWeights', w, 'Rows', 'pairwise', 'Economy', true);
+[wcoeff, score, latent, tsquared, explained] = pca(dmat, 'Rows', 'pairwise', 'Economy', true);
 
-    % Scree plot: latent contains the eigenvalues
-    figure(1)
-    plot(latent(1:10), 'o', 'LineStyle', '-', 'Color', 'b');
-    ylabel('eigenvalue')
-    xlabel('principle component')
+% Scree plot: latent contains the eigenvalues
+figure(1)
+plot(latent(1:10), 'o', 'LineStyle', '-', 'Color', 'b');
+ylabel('eigenvalue')
+xlabel('principle component')
 
-    % Just use first three principle components for now.
-    
-    % Compute coefficients.
-    c3 = wcoeff(:, 1:3);
-    
-    % Transform coefficients so that they are orthonormal.
-    coefforth = diag(sqrt(w))*wcoeff;
-    
+% Just use first three principle components for now.
+
+% Compute coefficients.
+c3 = wcoeff(:, 1:3);
+
+% Transform coefficients so that they are orthonormal.
+coefforth = diag(sqrt(w))*wcoeff;
+
 %     % Check that they are, indeed, orthonormal.
 %     I = coefforth'*coefforth;
 %     I(1:3,1:3)
@@ -80,23 +105,23 @@ for s = 2:size(subfolders, 1)
 cscores = zscore(dmat)*coefforth;
 
 
-figure(2)
-pareto(explained)
-xlabel('Principal Component')
-ylabel('Variance Explained (%)')
+% figure(2)
+% pareto(explained)
+% xlabel('Principal Component')
+% ylabel('Variance Explained (%)')
 
 figure(3)
-plot(cscores(:,1),cscores(:,2),'+')
+plot(cscores(:,1), '+')
 xlabel('1st Principal Component')
-ylabel('2nd Principal Component')   
+ylabel('2nd Principal Component')
 
-figure(4)
-plot3(cscores(:,1),cscores(:,2),cscores(:, 3),'+')
-xlabel('1st Principal Component')
-ylabel('2nd Principal Component')   
-zlabel('3rd Principal Component')   
-    
-end
+% figure(4)
+% plot3(cscores(:,1),cscores(:,2),cscores(:, 3),'+')
+% xlabel('1st Principal Component')
+% ylabel('2nd Principal Component')
+% zlabel('3rd Principal Component')
+
+% end
 
 
 
@@ -150,7 +175,7 @@ mri = sortrows(mri);
 % % QA: make histograms of each mri measure.
 % fa = table2array(mri(:, 2:6:end)); figure(1); histogram(fa(:), 100); xlim([0, 1]); title('fa'); hold off;
 % md = table2array(mri(:, 3:6:end)); figure(2); histogram(md(:), 100); xlim([min(md(:)), max(md(:))]); title('md'); hold off;
-% t1t2 = table2array(mri(:, 4:6:end)); figure(3); histogram(t1t2(:), 100); xlim([min(t1t2(:)), max(t1t2(:))]); title('t1t2'); hold off; 
+% t1t2 = table2array(mri(:, 4:6:end)); figure(3); histogram(t1t2(:), 100); xlim([min(t1t2(:)), max(t1t2(:))]); title('t1t2'); hold off;
 % ndi = table2array(mri(:, 5:6:end)); figure(4); histogram(ndi(:), 100); xlim([min(ndi(:)), max(ndi(:))]); title('ndi'); hold off;
 % odi = table2array(mri(:, 6:6:end)); figure(5); histogram(odi(:), 100); xlim([min(odi(:)), max(odi(:))]); title('odi'); hold off;
 % isovf = table2array(mri(:, 7:6:end)); figure(6); histogram(isovf(:), 100); xlim([min(isovf(:)), max(isovf(:))]); title('isovf'); hold off;
@@ -163,7 +188,7 @@ t = array2table(t_temp, 'VariableNames', t.Properties.VariableNames);
 % Delete all columns and rows that contain NaN, for now. Columns first.
 idxc = [1 6 12 18]; % 1 is subID, 6, 12, and 18 correspond to day 5 test measurements
 t(:, idxc) = [];
-idxr = []; 
+idxr = [];
 t(idxr, :) = [];
 
 % Correlations.
@@ -238,11 +263,11 @@ title('FA')
 
 hold off;
 
-% 
+%
 % % mat = corr(m);
 % % imagesc(mat);
 % % colorbar;
-% 
+%
 % % t1t2
 % figure(8);
 % mat = corr(table2array(t(:, [lr_idx, mt1_idx, rt1_idx, acc1_idx, first_t1t2_idx:step:end])));% % m = cat(2, table2array(mt(:, 2:end)), table2array(mri(:, 2:end)));
@@ -251,7 +276,7 @@ hold off;
 % imagesc(toplot); colorbar; caxis([-1 1]);
 % xlabels = t.Properties.VariableNames([lr_idx, mt1_idx, rt1_idx, acc1_idx, first_t1t2_idx:step:end]);
 % ylabels = t.Properties.VariableNames([lr_idx, mt1_idx, rt1_idx, acc1_idx, first_t1t2_idx:step:end]);
-% 
+%
 % % Set up plot and measure-specific details.
 % capsize = 0;
 % marker = 'o';
@@ -265,7 +290,7 @@ hold off;
 % fontangle = 'italic';
 % yticklength = 0;
 % xticklength = 0.05;
-% 
+%
 % % xaxis
 % xax = get(gca, 'xaxis');
 % % xax.Limits = [xlim_lo xlim_hi];
@@ -278,7 +303,7 @@ hold off;
 % xax.FontSize = fontsize;
 % % xax.FontAngle = fontangle;
 % xax.TickLabelRotation = 90;
-% 
+%
 % % yaxis
 % yax = get(gca,'yaxis');
 % % yax.Limits = [ylimlo ylimhi];
@@ -289,14 +314,14 @@ hold off;
 % yax.FontName = fontname;
 % yax.FontSize = fontsize;
 % yax.TickLabelRotation = 0;
-% 
+%
 % title('t1/t2 ratio')
-% 
-% 
+%
+%
 % % mat = corr(m);
 % % imagesc(mat);
 % % colorbar;
-% 
+%
 % % ndi
 % figure(9);
 % mat = corr(table2array(t(:, [lr_idx, mt1_idx, rt1_idx, acc1_idx, first_ndi_idx:step:end])));% % m = cat(2, table2array(mt(:, 2:end)), table2array(mri(:, 2:end)));
@@ -305,7 +330,7 @@ hold off;
 % imagesc(toplot); colorbar; caxis([-1 1]);
 % xlabels = t.Properties.VariableNames([lr_idx, mt1_idx, rt1_idx, acc1_idx, first_ndi_idx:step:end]);
 % ylabels = t.Properties.VariableNames([lr_idx, mt1_idx, rt1_idx, acc1_idx, first_ndi_idx:step:end]);
-% 
+%
 % % Set up plot and measure-specific details.
 % capsize = 0;
 % marker = 'o';
@@ -319,7 +344,7 @@ hold off;
 % fontangle = 'italic';
 % yticklength = 0;
 % xticklength = 0.05;
-% 
+%
 % % xaxis
 % xax = get(gca, 'xaxis');
 % % xax.Limits = [xlim_lo xlim_hi];
@@ -332,7 +357,7 @@ hold off;
 % xax.FontSize = fontsize;
 % % xax.FontAngle = fontangle;
 % xax.TickLabelRotation = 90;
-% 
+%
 % % yaxis
 % yax = get(gca,'yaxis');
 % % yax.Limits = [ylimlo ylimhi];
@@ -343,7 +368,7 @@ hold off;
 % yax.FontName = fontname;
 % yax.FontSize = fontsize;
 % yax.TickLabelRotation = 0;
-% 
+%
 % title('NDI')
 
 
@@ -367,16 +392,16 @@ x = t.leftparc_fa;
 [f, f2] = fit(x, y, 'poly1'); %, 'Robust', 'Lar');
 
 p=plot(f, x, y);
-    hold on;
+hold on;
 
-        % Customize scatter plot of data.
-    p(1).Color = [0 128 128]/255; %teal
-    p(1).MarkerSize = 40;
-    % Customize line plot of data.
-    p(2).Color = [0 128 128]/255; %teal
-    p(2).LineWidth = linewidth;
-    p(2).LineStyle = '--';
-    
+% Customize scatter plot of data.
+p(1).Color = [0 128 128]/255; %teal
+p(1).MarkerSize = 40;
+% Customize line plot of data.
+p(2).Color = [0 128 128]/255; %teal
+p(2).LineWidth = linewidth;
+p(2).LineStyle = '--';
+
 fontsize = 20;
 
 xlim_lo = -2; xlim_hi = 2;
@@ -447,16 +472,16 @@ x = t.leftparc_fa;
 [f, f2] = fit(x, y, 'poly1'); %, 'Robust', 'Lar');
 
 p=plot(f, x, y);
-    hold on;
+hold on;
 
-        % Customize scatter plot of data.
-    p(1).Color = [0 128 128]/255; %teal
-    p(1).MarkerSize = 40;
-    % Customize line plot of data.
-    p(2).Color = [0 128 128]/255; %teal
-    p(2).LineWidth = linewidth;
-    p(2).LineStyle = '--';
-    
+% Customize scatter plot of data.
+p(1).Color = [0 128 128]/255; %teal
+p(1).MarkerSize = 40;
+% Customize line plot of data.
+p(2).Color = [0 128 128]/255; %teal
+p(2).LineWidth = linewidth;
+p(2).LineStyle = '--';
+
 fontsize = 20;
 
 xlim_lo = -2; xlim_hi = 2;
@@ -525,16 +550,16 @@ x = t.leftslf1and2_fa;
 [f, f2] = fit(x, y, 'poly1'); %, 'Robust', 'Lar');
 
 p=plot(f, x, y);
-    hold on;
+hold on;
 
-        % Customize scatter plot of data.
-    p(1).Color = [255 165 0]/255; %orange
-    p(1).MarkerSize = 40;
-    % Customize line plot of data.
-    p(2).Color = [255 165 0]/255; %orange
-    p(2).LineWidth = linewidth;
-    p(2).LineStyle = '--';
-    
+% Customize scatter plot of data.
+p(1).Color = [255 165 0]/255; %orange
+p(1).MarkerSize = 40;
+% Customize line plot of data.
+p(2).Color = [255 165 0]/255; %orange
+p(2).LineWidth = linewidth;
+p(2).LineStyle = '--';
+
 fontsize = 20;
 
 xlim_lo = -2; xlim_hi = 2;
@@ -605,16 +630,16 @@ x = t.leftslf1and2_fa;
 [f, f2] = fit(x, y, 'poly1'); %, 'Robust', 'Lar');
 
 p=plot(f, x, y);
-    hold on;
+hold on;
 
-        % Customize scatter plot of data.
-    p(1).Color = [255 165 0]/255; %orange
-    p(1).MarkerSize = 40;
-    % Customize line plot of data.
-    p(2).Color = [255 165 0]/255; %orange
-    p(2).LineWidth = linewidth;
-    p(2).LineStyle = '--';
-    
+% Customize scatter plot of data.
+p(1).Color = [255 165 0]/255; %orange
+p(1).MarkerSize = 40;
+% Customize line plot of data.
+p(2).Color = [255 165 0]/255; %orange
+p(2).LineWidth = linewidth;
+p(2).LineStyle = '--';
+
 fontsize = 20;
 
 xlim_lo = -2; xlim_hi = 2;
@@ -685,16 +710,16 @@ x = t.leftifof_fa;
 [f, f2] = fit(x, y, 'poly1'); %, 'Robust', 'Lar');
 
 p=plot(f, x, y);
-    hold on;
+hold on;
 
-        % Customize scatter plot of data.
-    p(1).Color = [30 144 250]/255; %blue
-    p(1).MarkerSize = 40;
-    % Customize line plot of data.
-    p(2).Color = [30 144 250]/255; %blue
-    p(2).LineWidth = linewidth;
-    p(2).LineStyle = '--';
-    
+% Customize scatter plot of data.
+p(1).Color = [30 144 250]/255; %blue
+p(1).MarkerSize = 40;
+% Customize line plot of data.
+p(2).Color = [30 144 250]/255; %blue
+p(2).LineWidth = linewidth;
+p(2).LineStyle = '--';
+
 fontsize = 20;
 
 xlim_lo = -2; xlim_hi = 2;
@@ -765,16 +790,16 @@ x = t.leftifof_fa;
 [f, f2] = fit(x, y, 'poly1'); %, 'Robust', 'Lar');
 
 p=plot(f, x, y);
-    hold on;
+hold on;
 
-        % Customize scatter plot of data.
-    p(1).Color = [30 144 250]/255; %blue
-    p(1).MarkerSize = 40;
-    % Customize line plot of data.
-    p(2).Color = [30 144 250]/255; %blue
-    p(2).LineWidth = linewidth;
-    p(2).LineStyle = '--';
-    
+% Customize scatter plot of data.
+p(1).Color = [30 144 250]/255; %blue
+p(1).MarkerSize = 40;
+% Customize line plot of data.
+p(2).Color = [30 144 250]/255; %blue
+p(2).LineWidth = linewidth;
+p(2).LineStyle = '--';
+
 fontsize = 20;
 
 xlim_lo = -2; xlim_hi = 2;
@@ -845,16 +870,16 @@ x = t.leftilf_fa;
 [f, f2] = fit(x, y, 'poly1'); %, 'Robust', 'Lar');
 
 p=plot(f, x, y);
-    hold on;
+hold on;
 
-        % Customize scatter plot of data.
-    p(1).Color = [30 144 250]/255; %blue
-    p(1).MarkerSize = 40;
-    % Customize line plot of data.
-    p(2).Color = [30 144 250]/255; %blue
-    p(2).LineWidth = linewidth;
-    p(2).LineStyle = '--';
-    
+% Customize scatter plot of data.
+p(1).Color = [30 144 250]/255; %blue
+p(1).MarkerSize = 40;
+% Customize line plot of data.
+p(2).Color = [30 144 250]/255; %blue
+p(2).LineWidth = linewidth;
+p(2).LineStyle = '--';
+
 fontsize = 20;
 
 xlim_lo = -2; xlim_hi = 2;
@@ -925,16 +950,16 @@ x = t.leftilf_fa;
 [f, f2] = fit(x, y, 'poly1'); %, 'Robust', 'Lar');
 
 p=plot(f, x, y);
-    hold on;
+hold on;
 
-        % Customize scatter plot of data.
-    p(1).Color = [30 144 250]/255; %blue
-    p(1).MarkerSize = 40;
-    % Customize line plot of data.
-    p(2).Color = [30 144 250]/255; %blue
-    p(2).LineWidth = linewidth;
-    p(2).LineStyle = '--';
-    
+% Customize scatter plot of data.
+p(1).Color = [30 144 250]/255; %blue
+p(1).MarkerSize = 40;
+% Customize line plot of data.
+p(2).Color = [30 144 250]/255; %blue
+p(2).LineWidth = linewidth;
+p(2).LineStyle = '--';
+
 fontsize = 20;
 
 xlim_lo = -2; xlim_hi = 2;

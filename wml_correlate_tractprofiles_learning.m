@@ -1,35 +1,42 @@
 clear all; close all; clc;
 
 % Set working directories.
-rootDir = '/Volumes/Seagate/wml/wml-wmpredictslearning';
+rootdir = '/Volumes/Seagate/wml/wml-wmpredictslearning';
 
 % Identify outliers for removal.
-remove = [27 32]; 
+remove = [27 31 32 65 71];
+% 65, 71 still processing on brainlife
+
+%[22 24 25 26 28 30 31 33 35 42 51 53 55 66];
+
 % MRI
 % 32, 33, 35, 41 have spike artifacts
 % 27 has severe motion
 % 24, 31 withdrew mid-training, so multi-day learningrate is not accurate
-% (but day 1 learning rate is accurate) 
+% (but day 1 learning rate is accurate)
 % 3, NaN for rightmdlfspl, rightmdlfang, rightvof ~ sub 25
 % 7, NaN for rightmdlfspl ~ sub 31
 % 8, NaN for leftifof ~ sub 32
 % 12, rightifof, leftuncinate ~ sub 42
 
+% 22, 24, 25, 26, 28, 30, 31, 33, 35, 42, 51, 53, 55, 66, waiting on
+% mp2rage upload to brainlife
+
 % Training
 % 24 have only day 1 data
 % 31 have only day 1 and day 2 data
-% 32 had 0% accuracy by day 4 
+% 32 had 0% accuracy by day 4
 % 50 missing day 3, experimenter error
 % 66 in progress, as of 10/26/21
 
 % Load recog data and remove outliers and sort by subID.
-datestring = '20211026';
-n = 29;
+datestring = '20211119';
+n = 36;
 fittype = 'poly1';
 
 % Load recog acc data and remove outliers and sort by subID.
-filename = sprintf('WML_beh_data_recog_test_%s', datestring);
-load(fullfile(rootDir, 'wml-wmpredictslearning-supportFiles', filename), 'data_recog', 'data_recog_acc_mean');
+filename = sprintf('wml_beh_data_recog_test_%s', datestring);
+load(fullfile(rootdir, 'wml-wmpredictslearning-supportFiles', filename), 'data_recog', 'data_recog_acc_mean');
 
 keep = find(~ismember(data_recog_acc_mean.Var1, remove));
 
@@ -38,8 +45,8 @@ acc = array2table(temp, 'VariableNames', {'subID', 'acc_day1', 'acc_day2', 'acc_
 acc = sortrows(acc);
 
 % Load writing data and remove outliers and sort by subID.
-filename = sprintf('WML_beh_data_write_wlearningrate_%s_n=%d_%s', fittype, n, datestring);
-load(fullfile(rootDir, 'wml-wmpredictslearning-supportFiles', filename), 'data_write', 'data_write_mean');
+filename = sprintf('wml_beh_data_write_wlearningrate_%s_n=%d_%s', fittype, n, datestring);
+load(fullfile(rootdir, 'wml-wmpredictslearning-supportFiles', filename), 'data_write', 'data_write_mean');
 
 keep = find(~ismember(data_write_mean.Var1, remove));
 
@@ -49,8 +56,8 @@ mt = sortrows(mt, 1);
 mt.mt_learningrate = -mt.mt_learningrate; % make faster learners positive (easier on my brain)
 
 % Load recog rt data with learning rate and remove outliers and sort by subID.
-filename = sprintf('WML_beh_data_recog_rt_wlearningrate_%s_n=%d_%s', fittype, n, datestring);
-load(fullfile(rootDir, 'wml-wmpredictslearning-supportFiles', filename), 'data_recog', 'data_recog_rt_mean');
+filename = sprintf('wml_beh_data_recog_rt_wlearningrate_%s_n=%d_%s', fittype, n, datestring);
+load(fullfile(rootdir, 'wml-wmpredictslearning-supportFiles', filename), 'data_recog', 'data_recog_rt_mean');
 
 keep = find(~ismember(data_recog_rt_mean.Var1, remove));
 
@@ -60,8 +67,9 @@ rt = sortrows(rt, 1);
 rt.rt_learningrate = -rt.rt_learningrate; % make faster learners positive (easier on my brain)
 
 % Load tractprofiles data and remove outliers and sort by subID.
-filename = sprintf('WML_mri_data_tractprofiles');%_%s', datestring);
-load(fullfile(rootDir, 'wml-wmpredictslearning-supportFiles', filename), 'data_tractprofiles_mean');
+n=31;
+filename = sprintf('wml_mri_data_tractprofiles');%_%s', datestring);
+load(fullfile(rootdir, 'wml-wmpredictslearning-supportFiles', filename), 'data_tractprofiles_mean');
 
 keep = find(~ismember(data_tractprofiles_mean.subID, remove));
 
@@ -72,7 +80,7 @@ mri = sortrows(mri);
 % % QA: make histograms of each mri measure.
 % fa = table2array(mri(:, 2:6:end)); figure(1); histogram(fa(:), 100); xlim([0, 1]); title('fa'); hold off;
 % md = table2array(mri(:, 3:6:end)); figure(2); histogram(md(:), 100); xlim([min(md(:)), max(md(:))]); title('md'); hold off;
-% t1t2 = table2array(mri(:, 4:6:end)); figure(3); histogram(t1t2(:), 100); xlim([min(t1t2(:)), max(t1t2(:))]); title('t1t2'); hold off; 
+% t1t2 = table2array(mri(:, 4:6:end)); figure(3); histogram(t1t2(:), 100); xlim([min(t1t2(:)), max(t1t2(:))]); title('t1t2'); hold off;
 % ndi = table2array(mri(:, 5:6:end)); figure(4); histogram(ndi(:), 100); xlim([min(ndi(:)), max(ndi(:))]); title('ndi'); hold off;
 % odi = table2array(mri(:, 6:6:end)); figure(5); histogram(odi(:), 100); xlim([min(odi(:)), max(odi(:))]); title('odi'); hold off;
 % isovf = table2array(mri(:, 7:6:end)); figure(6); histogram(isovf(:), 100); xlim([min(isovf(:)), max(isovf(:))]); title('isovf'); hold off;
@@ -85,7 +93,7 @@ t = array2table(t_temp, 'VariableNames', t.Properties.VariableNames);
 % Delete all columns and rows that contain NaN, for now. Columns first.
 idxc = [1 6 12 18]; % 1 is subID, 6, 12, and 18 correspond to day 5 test measurements
 t(:, idxc) = [];
-idxr = []; 
+idxr = [2 9 15];
 t(idxr, :) = [];
 
 % Correlations.
@@ -160,11 +168,11 @@ title('FA')
 
 hold off;
 
-% 
+%
 % % mat = corr(m);
 % % imagesc(mat);
 % % colorbar;
-% 
+%
 % % t1t2
 % figure(8);
 % mat = corr(table2array(t(:, [lr_idx, mt1_idx, rt1_idx, acc1_idx, first_t1t2_idx:step:end])));% % m = cat(2, table2array(mt(:, 2:end)), table2array(mri(:, 2:end)));
@@ -173,7 +181,7 @@ hold off;
 % imagesc(toplot); colorbar; caxis([-1 1]);
 % xlabels = t.Properties.VariableNames([lr_idx, mt1_idx, rt1_idx, acc1_idx, first_t1t2_idx:step:end]);
 % ylabels = t.Properties.VariableNames([lr_idx, mt1_idx, rt1_idx, acc1_idx, first_t1t2_idx:step:end]);
-% 
+%
 % % Set up plot and measure-specific details.
 % capsize = 0;
 % marker = 'o';
@@ -187,7 +195,7 @@ hold off;
 % fontangle = 'italic';
 % yticklength = 0;
 % xticklength = 0.05;
-% 
+%
 % % xaxis
 % xax = get(gca, 'xaxis');
 % % xax.Limits = [xlim_lo xlim_hi];
@@ -200,7 +208,7 @@ hold off;
 % xax.FontSize = fontsize;
 % % xax.FontAngle = fontangle;
 % xax.TickLabelRotation = 90;
-% 
+%
 % % yaxis
 % yax = get(gca,'yaxis');
 % % yax.Limits = [ylimlo ylimhi];
@@ -211,14 +219,14 @@ hold off;
 % yax.FontName = fontname;
 % yax.FontSize = fontsize;
 % yax.TickLabelRotation = 0;
-% 
+%
 % title('t1/t2 ratio')
-% 
-% 
+%
+%
 % % mat = corr(m);
 % % imagesc(mat);
 % % colorbar;
-% 
+%
 % % ndi
 % figure(9);
 % mat = corr(table2array(t(:, [lr_idx, mt1_idx, rt1_idx, acc1_idx, first_ndi_idx:step:end])));% % m = cat(2, table2array(mt(:, 2:end)), table2array(mri(:, 2:end)));
@@ -227,7 +235,7 @@ hold off;
 % imagesc(toplot); colorbar; caxis([-1 1]);
 % xlabels = t.Properties.VariableNames([lr_idx, mt1_idx, rt1_idx, acc1_idx, first_ndi_idx:step:end]);
 % ylabels = t.Properties.VariableNames([lr_idx, mt1_idx, rt1_idx, acc1_idx, first_ndi_idx:step:end]);
-% 
+%
 % % Set up plot and measure-specific details.
 % capsize = 0;
 % marker = 'o';
@@ -241,7 +249,7 @@ hold off;
 % fontangle = 'italic';
 % yticklength = 0;
 % xticklength = 0.05;
-% 
+%
 % % xaxis
 % xax = get(gca, 'xaxis');
 % % xax.Limits = [xlim_lo xlim_hi];
@@ -254,7 +262,7 @@ hold off;
 % xax.FontSize = fontsize;
 % % xax.FontAngle = fontangle;
 % xax.TickLabelRotation = 90;
-% 
+%
 % % yaxis
 % yax = get(gca,'yaxis');
 % % yax.Limits = [ylimlo ylimhi];
@@ -265,7 +273,7 @@ hold off;
 % yax.FontName = fontname;
 % yax.FontSize = fontsize;
 % yax.TickLabelRotation = 0;
-% 
+%
 % title('NDI')
 
 
@@ -274,12 +282,19 @@ hold off;
 % colorbar;
 
 figure(2);
-
+alphastat = 0.01;
 % Fit a linear model: Does wm predict mt at day 1?
 modelspec = 'mt_learningrate~leftparc_fa';
 mdl = fitlm(t, modelspec);
 mdl.Coefficients
 anova(mdl, 'summary')
+
+% % see if the model fit for the mt_learningrate can predict
+% % recog_learningrate
+% y = t.rt_day1;
+% x = mdl.Fitted;
+% [f, f2] = fit(x, y, 'poly1'); %, 'Robust', 'Lar');
+% p=plot(f, x, y);
 
 % Another way, easier to plot with: Extract data for this fit.
 y = t.mt_learningrate;
@@ -289,16 +304,16 @@ x = t.leftparc_fa;
 [f, f2] = fit(x, y, 'poly1'); %, 'Robust', 'Lar');
 
 p=plot(f, x, y);
-    hold on;
+hold on;
 
-        % Customize scatter plot of data.
-    p(1).Color = [0 128 128]/255; %teal
-    p(1).MarkerSize = 40;
-    % Customize line plot of data.
-    p(2).Color = [0 128 128]/255; %teal
-    p(2).LineWidth = linewidth;
-    p(2).LineStyle = '--';
-    
+% Customize scatter plot of data.
+p(1).Color = [0 128 128]/255; %teal
+p(1).MarkerSize = 40;
+% Customize line plot of data.
+p(2).Color = [0 128 128]/255; %teal
+p(2).LineWidth = linewidth;
+p(2).LineStyle = '--';
+
 fontsize = 20;
 
 xlim_lo = -2; xlim_hi = 2;
@@ -348,8 +363,8 @@ text(-1.8, 1.4, ['beta = ' num2str(f.p1)])
 text(-1.8, 1.2, ['p = ' num2str(mdl.Coefficients.pValue(2))])
 text(-1.8, 1.0, ['n = ' num2str(n)])
 
-print(fullfile(rootDir, 'wml-wmpredictslearning-plots', ['plot_corr_mt_leftparc_n=' num2str(n)]), '-dpng')
-print(fullfile(rootDir, 'wml-wmpredictslearning-plots', 'eps', ['plot_corr_mt_leftparc_n=' num2str(n)]), '-depsc')
+print(fullfile(rootdir, 'wml-wmpredictslearning-plots', ['plot_corr_mt_leftparc_n=' num2str(n)]), '-dpng')
+print(fullfile(rootdir, 'wml-wmpredictslearning-plots', 'eps', ['plot_corr_mt_leftparc_n=' num2str(n)]), '-depsc')
 
 hold off;
 
@@ -369,16 +384,16 @@ x = t.leftparc_fa;
 [f, f2] = fit(x, y, 'poly1'); %, 'Robust', 'Lar');
 
 p=plot(f, x, y);
-    hold on;
+hold on;
 
-        % Customize scatter plot of data.
-    p(1).Color = [0 128 128]/255; %teal
-    p(1).MarkerSize = 40;
-    % Customize line plot of data.
-    p(2).Color = [0 128 128]/255; %teal
-    p(2).LineWidth = linewidth;
-    p(2).LineStyle = '--';
-    
+% Customize scatter plot of data.
+p(1).Color = [0 128 128]/255; %teal
+p(1).MarkerSize = 40;
+% Customize line plot of data.
+p(2).Color = [0 128 128]/255; %teal
+p(2).LineWidth = linewidth;
+p(2).LineStyle = '--';
+
 fontsize = 20;
 
 xlim_lo = -2; xlim_hi = 2;
@@ -428,8 +443,8 @@ text(-1.8, 1.4, ['beta = ' num2str(f.p1)])
 text(-1.8, 1.2, ['p = ' num2str(mdl.Coefficients.pValue(2))])
 text(-1.8, 1.0, ['n = ' num2str(n)])
 
-print(fullfile(rootDir, 'wml-wmpredictslearning-plots', ['plot_corr_rt_leftparc_n=' num2str(n)]), '-dpng')
-print(fullfile(rootDir, 'wml-wmpredictslearning-plots', 'eps', ['plot_corr_rt_leftparc_n=' num2str(n)]), '-depsc')
+print(fullfile(rootdir, 'wml-wmpredictslearning-plots', ['plot_corr_rt_leftparc_n=' num2str(n)]), '-dpng')
+print(fullfile(rootdir, 'wml-wmpredictslearning-plots', 'eps', ['plot_corr_rt_leftparc_n=' num2str(n)]), '-depsc')
 
 figure(4);
 
@@ -447,16 +462,16 @@ x = t.leftslf1and2_fa;
 [f, f2] = fit(x, y, 'poly1'); %, 'Robust', 'Lar');
 
 p=plot(f, x, y);
-    hold on;
+hold on;
 
-        % Customize scatter plot of data.
-    p(1).Color = [255 165 0]/255; %orange
-    p(1).MarkerSize = 40;
-    % Customize line plot of data.
-    p(2).Color = [255 165 0]/255; %orange
-    p(2).LineWidth = linewidth;
-    p(2).LineStyle = '--';
-    
+% Customize scatter plot of data.
+p(1).Color = [255 165 0]/255; %orange
+p(1).MarkerSize = 40;
+% Customize line plot of data.
+p(2).Color = [255 165 0]/255; %orange
+p(2).LineWidth = linewidth;
+p(2).LineStyle = '--';
+
 fontsize = 20;
 
 xlim_lo = -2; xlim_hi = 2;
@@ -506,8 +521,8 @@ text(-1.8, 1.4, ['beta = ' num2str(f.p1)])
 text(-1.8, 1.2, ['p = ' num2str(mdl.Coefficients.pValue(2))])
 text(-1.8, 1.0, ['n = ' num2str(n)])
 
-print(fullfile(rootDir, 'wml-wmpredictslearning-plots', ['plot_corr_mt_leftslf1and2_n=' num2str(n)]), '-dpng')
-print(fullfile(rootDir, 'wml-wmpredictslearning-plots', 'eps', ['plot_corr_mt_leftslf1and2_n=' num2str(n)]), '-depsc')
+print(fullfile(rootdir, 'wml-wmpredictslearning-plots', ['plot_corr_mt_leftslf1and2_n=' num2str(n)]), '-dpng')
+print(fullfile(rootdir, 'wml-wmpredictslearning-plots', 'eps', ['plot_corr_mt_leftslf1and2_n=' num2str(n)]), '-depsc')
 
 hold off;
 
@@ -527,16 +542,16 @@ x = t.leftslf1and2_fa;
 [f, f2] = fit(x, y, 'poly1'); %, 'Robust', 'Lar');
 
 p=plot(f, x, y);
-    hold on;
+hold on;
 
-        % Customize scatter plot of data.
-    p(1).Color = [255 165 0]/255; %orange
-    p(1).MarkerSize = 40;
-    % Customize line plot of data.
-    p(2).Color = [255 165 0]/255; %orange
-    p(2).LineWidth = linewidth;
-    p(2).LineStyle = '--';
-    
+% Customize scatter plot of data.
+p(1).Color = [255 165 0]/255; %orange
+p(1).MarkerSize = 40;
+% Customize line plot of data.
+p(2).Color = [255 165 0]/255; %orange
+p(2).LineWidth = linewidth;
+p(2).LineStyle = '--';
+
 fontsize = 20;
 
 xlim_lo = -2; xlim_hi = 2;
@@ -586,8 +601,8 @@ text(-1.8, 1.4, ['beta = ' num2str(f.p1)])
 text(-1.8, 1.2, ['p = ' num2str(mdl.Coefficients.pValue(2))])
 text(-1.8, 1.0, ['n = ' num2str(n)])
 
-print(fullfile(rootDir, 'wml-wmpredictslearning-plots', ['plot_corr_rt_leftslf1and2_n=' num2str(n)]), '-dpng')
-print(fullfile(rootDir, 'wml-wmpredictslearning-plots', 'eps', ['plot_corr_rt_leftslf1and2_n=' num2str(n)]), '-depsc')
+print(fullfile(rootdir, 'wml-wmpredictslearning-plots', ['plot_corr_rt_leftslf1and2_n=' num2str(n)]), '-dpng')
+print(fullfile(rootdir, 'wml-wmpredictslearning-plots', 'eps', ['plot_corr_rt_leftslf1and2_n=' num2str(n)]), '-depsc')
 
 hold off;
 
@@ -607,16 +622,16 @@ x = t.leftifof_fa;
 [f, f2] = fit(x, y, 'poly1'); %, 'Robust', 'Lar');
 
 p=plot(f, x, y);
-    hold on;
+hold on;
 
-        % Customize scatter plot of data.
-    p(1).Color = [30 144 250]/255; %blue
-    p(1).MarkerSize = 40;
-    % Customize line plot of data.
-    p(2).Color = [30 144 250]/255; %blue
-    p(2).LineWidth = linewidth;
-    p(2).LineStyle = '--';
-    
+% Customize scatter plot of data.
+p(1).Color = [30 144 250]/255; %blue
+p(1).MarkerSize = 40;
+% Customize line plot of data.
+p(2).Color = [30 144 250]/255; %blue
+p(2).LineWidth = linewidth;
+p(2).LineStyle = '--';
+
 fontsize = 20;
 
 xlim_lo = -2; xlim_hi = 2;
@@ -666,8 +681,8 @@ text(-1.8, 1.4, ['beta = ' num2str(f.p1)])
 text(-1.8, 1.2, ['p = ' num2str(mdl.Coefficients.pValue(2))])
 text(-1.8, 1.0, ['n = ' num2str(n)])
 
-print(fullfile(rootDir, 'wml-wmpredictslearning-plots', ['plot_corr_mt_leftifof_n=' num2str(n)]), '-dpng')
-print(fullfile(rootDir, 'wml-wmpredictslearning-plots', 'eps', ['plot_corr_mt_leftifof_n=' num2str(n)]), '-depsc')
+print(fullfile(rootdir, 'wml-wmpredictslearning-plots', ['plot_corr_mt_leftifof_n=' num2str(n)]), '-dpng')
+print(fullfile(rootdir, 'wml-wmpredictslearning-plots', 'eps', ['plot_corr_mt_leftifof_n=' num2str(n)]), '-depsc')
 
 hold off;
 
@@ -687,16 +702,16 @@ x = t.leftifof_fa;
 [f, f2] = fit(x, y, 'poly1'); %, 'Robust', 'Lar');
 
 p=plot(f, x, y);
-    hold on;
+hold on;
 
-        % Customize scatter plot of data.
-    p(1).Color = [30 144 250]/255; %blue
-    p(1).MarkerSize = 40;
-    % Customize line plot of data.
-    p(2).Color = [30 144 250]/255; %blue
-    p(2).LineWidth = linewidth;
-    p(2).LineStyle = '--';
-    
+% Customize scatter plot of data.
+p(1).Color = [30 144 250]/255; %blue
+p(1).MarkerSize = 40;
+% Customize line plot of data.
+p(2).Color = [30 144 250]/255; %blue
+p(2).LineWidth = linewidth;
+p(2).LineStyle = '--';
+
 fontsize = 20;
 
 xlim_lo = -2; xlim_hi = 2;
@@ -746,8 +761,8 @@ text(-1.8, 1.4, ['beta = ' num2str(f.p1)])
 text(-1.8, 1.2, ['p = ' num2str(mdl.Coefficients.pValue(2))])
 text(-1.8, 1.0, ['n = ' num2str(n)])
 
-print(fullfile(rootDir, 'wml-wmpredictslearning-plots', ['plot_corr_rt_leftifof_n=' num2str(n)]), '-dpng')
-print(fullfile(rootDir, 'wml-wmpredictslearning-plots', 'eps', ['plot_corr_rt_leftifof_n=' num2str(n)]), '-depsc')
+print(fullfile(rootdir, 'wml-wmpredictslearning-plots', ['plot_corr_rt_leftifof_n=' num2str(n)]), '-dpng')
+print(fullfile(rootdir, 'wml-wmpredictslearning-plots', 'eps', ['plot_corr_rt_leftifof_n=' num2str(n)]), '-depsc')
 
 hold off;
 
@@ -767,16 +782,16 @@ x = t.leftilf_fa;
 [f, f2] = fit(x, y, 'poly1'); %, 'Robust', 'Lar');
 
 p=plot(f, x, y);
-    hold on;
+hold on;
 
-        % Customize scatter plot of data.
-    p(1).Color = [30 144 250]/255; %blue
-    p(1).MarkerSize = 40;
-    % Customize line plot of data.
-    p(2).Color = [30 144 250]/255; %blue
-    p(2).LineWidth = linewidth;
-    p(2).LineStyle = '--';
-    
+% Customize scatter plot of data.
+p(1).Color = [30 144 250]/255; %blue
+p(1).MarkerSize = 40;
+% Customize line plot of data.
+p(2).Color = [30 144 250]/255; %blue
+p(2).LineWidth = linewidth;
+p(2).LineStyle = '--';
+
 fontsize = 20;
 
 xlim_lo = -2; xlim_hi = 2;
@@ -826,8 +841,8 @@ text(-1.8, 1.4, ['beta = ' num2str(f.p1)])
 text(-1.8, 1.2, ['p = ' num2str(mdl.Coefficients.pValue(2))])
 text(-1.8, 1.0, ['n = ' num2str(n)])
 
-print(fullfile(rootDir, 'wml-wmpredictslearning-plots', ['plot_corr_mt_leftilf_n=' num2str(n)]), '-dpng')
-print(fullfile(rootDir, 'wml-wmpredictslearning-plots', 'eps', ['plot_corr_mt_leftilf_n=' num2str(n)]), '-depsc')
+print(fullfile(rootdir, 'wml-wmpredictslearning-plots', ['plot_corr_mt_leftilf_n=' num2str(n)]), '-dpng')
+print(fullfile(rootdir, 'wml-wmpredictslearning-plots', 'eps', ['plot_corr_mt_leftilf_n=' num2str(n)]), '-depsc')
 
 hold off;
 
@@ -847,16 +862,16 @@ x = t.leftilf_fa;
 [f, f2] = fit(x, y, 'poly1'); %, 'Robust', 'Lar');
 
 p=plot(f, x, y);
-    hold on;
+hold on;
 
-        % Customize scatter plot of data.
-    p(1).Color = [30 144 250]/255; %blue
-    p(1).MarkerSize = 40;
-    % Customize line plot of data.
-    p(2).Color = [30 144 250]/255; %blue
-    p(2).LineWidth = linewidth;
-    p(2).LineStyle = '--';
-    
+% Customize scatter plot of data.
+p(1).Color = [30 144 250]/255; %blue
+p(1).MarkerSize = 40;
+% Customize line plot of data.
+p(2).Color = [30 144 250]/255; %blue
+p(2).LineWidth = linewidth;
+p(2).LineStyle = '--';
+
 fontsize = 20;
 
 xlim_lo = -2; xlim_hi = 2;
@@ -906,8 +921,8 @@ text(-1.8, 1.4, ['beta = ' num2str(f.p1)])
 text(-1.8, 1.2, ['p = ' num2str(mdl.Coefficients.pValue(2))])
 text(-1.8, 1.0, ['n = ' num2str(n)])
 
-print(fullfile(rootDir, 'wml-wmpredictslearning-plots', ['plot_corr_rt_leftilf_n=' num2str(n)]), '-dpng')
-print(fullfile(rootDir, 'wml-wmpredictslearning-plots', 'eps', ['plot_corr_rt_leftilf_n=' num2str(n)]), '-depsc')
+print(fullfile(rootdir, 'wml-wmpredictslearning-plots', ['plot_corr_rt_leftilf_n=' num2str(n)]), '-dpng')
+print(fullfile(rootdir, 'wml-wmpredictslearning-plots', 'eps', ['plot_corr_rt_leftilf_n=' num2str(n)]), '-depsc')
 
 hold off;
 

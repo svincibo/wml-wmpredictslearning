@@ -4,7 +4,7 @@ clear all; close all; clc
 rootDir = '/Volumes/Seagate/wml/';
 
 % Create date-specific file name that indicates how many subjects.
-datestring = '20211026';
+datestring = '20211119';
 remove = []; %[22 27 35 41 60 62];
 filename = sprintf('wml_beh_data_write_%s', datestring);
 
@@ -23,7 +23,7 @@ mt = sortrows(data_write, [1 3 5 6]);
 % Remove day 5 for now.
 mt = mt(find(mt.day ~= 5), :);
 
-% % Use day 1 only for now.
+% Use day 1 only for now.
 mt = mt(find(mt.day == 1), :);
 
 % Add overall trial counter.
@@ -245,7 +245,7 @@ data_write_mean = sortrows(data_write_mean, 1);
 data_write_mean.learningrate = learningrate';
 
 % Create date-specific file name that indicates how many subjects.
-filename = sprintf('WML_beh_data_write_wlearningrate_%s_n=%d_%s', fittype, size(data_write_mean, 1), datestr(now,'yyyymmdd'));
+filename = sprintf('wml_beh_data_write_wlearningrate_%s_n=%d_%s', fittype, size(data_write_mean, 1), datestr(now,'yyyymmdd'));
 
 % Save all variables.
 save(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-supportFiles', filename), 'data_write', 'data_write_mean');

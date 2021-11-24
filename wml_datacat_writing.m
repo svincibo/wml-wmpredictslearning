@@ -111,7 +111,7 @@ data_write_mean = array2table(A(any(~isnan(A),2),:));   %for rows
 clear A;
 
 % Create date-specific file name that indicates how many subjects.
-filename = sprintf('WML_beh_data_write_%s', datestr(now,'yyyymmdd'));
+filename = sprintf('wml_beh_data_write_%s', datestr(now,'yyyymmdd'));
 
 % Save all variables.
 save(fullfile(rootDir, 'wml-wmpredictslearning', 'wml-wmpredictslearning-supportFiles', filename), 'data_write', 'data_write_mean');
