@@ -4,7 +4,9 @@ clear all; close all; clc;
 rootdir = '/Volumes/Seagate/wml/wml-wmpredictslearning';
 
 % Identify outliers for removal.
-remove = [27 31 32 65 71];
+remove = [27 31 32 65 71 51];
+    remove = [27 32 51 22 24 25 26 28 30 31 33 35 42];
+
 % 65, 71 still processing on brainlife
 
 %[22 24 25 26 28 30 31 33 35 42 51 53 55 66];
@@ -68,7 +70,7 @@ rt.rt_learningrate = -rt.rt_learningrate; % make faster learners positive (easie
 
 % Load tractprofiles data and remove outliers and sort by subID.
 n=31;
-filename = sprintf('wml_mri_data_tractprofiles');%_%s', datestring);
+filename = sprintf('wml_mri_data_tractprofiles_wmp2rage');%_%s', datestring);
 load(fullfile(rootdir, 'wml-wmpredictslearning-supportFiles', filename), 'data_tractprofiles_mean');
 
 keep = find(~ismember(data_tractprofiles_mean.subID, remove));
@@ -109,10 +111,10 @@ rt_lr_idx = 10;
 mt1_idx = 1;
 rt1_idx = 6;
 acc1_idx = 11;
-first_fa_idx = 15; %15=fa, 16=md
+first_fa_idx = 19; %15=fa, 16=md
 % first_t1t2_idx = 17;
 % first_ndi_idx = 18;
-step = 6;
+step = 8;
 corr_thresh = .3;
 p_thresh = .05;
 
@@ -164,10 +166,11 @@ yax.FontName = fontname;
 yax.FontSize = fontsize;
 yax.TickLabelRotation = 0;
 
-title('FA')
+title('r1')
 
+print(fullfile(rootdir, 'wml-wmpredictslearning-plots', ['plot_corr_r1_n=' num2str(n)]), '-dpng')
+print(fullfile(rootdir, 'wml-wmpredictslearning-plots', 'eps', ['plot_corrr1_n=' num2str(n)]), '-depsc')
 hold off;
-
 %
 % % mat = corr(m);
 % % imagesc(mat);

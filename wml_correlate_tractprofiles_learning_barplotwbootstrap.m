@@ -2,10 +2,10 @@ clear all; close all; clc;
 
 % Set working directories.
 rootDir = '/Volumes/Seagate/wml/wml-wmpredictslearning';
-mp2rage = 'no';
+mp2rage = 'yes';
 niter = 10000;
 alphastat = 0.01;
-wmmeasure = 'fa';
+wmmeasure = 'r1';
 hemisphere = 'both'; %left, right, both
 
 % Identify outliers for removal.
@@ -113,11 +113,11 @@ t(:, idxc) = [];
 %% Frontal motor -- vof -- Sensorimotor
 lr = t.mt_learningrate;
 if strcmp(hemisphere, 'left')
-    wm = t.leftvof_fa;
+    wm = t.leftvof_r1;
 elseif strcmp(hemisphere, 'right')
-        wm = t.rightvof_fa;
+        wm = t.rightvof_r1;
 elseif strcmp(hemisphere, 'both')
-        wm = mean([t.leftvof_fa t.rightvof_fa], 2);
+        wm = mean([t.leftvof_r1 t.rightvof_r1], 2);
 end
 for r = 1:niter
     
@@ -140,11 +140,11 @@ clear beta_resampled
 %% Frontal Motor -- vof -- Recognition
 lr = t.rt_learningrate;
 if strcmp(hemisphere, 'left')
-    wm = t.leftvof_fa;
+    wm = t.leftvof_r1;
 elseif strcmp(hemisphere, 'right')
-        wm = t.rightvof_fa;
+        wm = t.rightvof_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.leftvof_fa t.rightvof_fa], 2);
+            wm = mean([t.leftvof_r1 t.rightvof_r1], 2);
 end
 for r = 1:niter
     
@@ -167,11 +167,11 @@ clear beta_resampled
 %% Posterior Vertical Pathway -- parc -- Sensorimotor
 lr = t.mt_learningrate;
 if strcmp(hemisphere, 'left')
-    wm = t.leftparc_fa;
+    wm = t.leftparc_r1;
 elseif strcmp(hemisphere, 'right')
-        wm = t.rightparc_fa;
+        wm = t.rightparc_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.leftparc_fa t.rightparc_fa], 2);
+            wm = mean([t.leftparc_r1 t.rightparc_r1], 2);
 end
 for r = 1:niter
     
@@ -194,11 +194,11 @@ clear beta_resampled
 %% Posterior Vertical Pathway -- parc -- Recognition
 lr = t.rt_learningrate;
 if strcmp(hemisphere, 'left')
-wm = t.leftparc_fa;
+wm = t.leftparc_r1;
 elseif strcmp(hemisphere, 'right')
-    wm = t.rightparc_fa;
+    wm = t.rightparc_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.leftparc_fa t.rightparc_fa], 2);
+            wm = mean([t.leftparc_r1 t.rightparc_r1], 2);
 end
 for r = 1:niter
     
@@ -221,11 +221,11 @@ clear beta_resampled
 %% Posterior Vertical Pathway -- tpc -- Sensorimotor
 lr = t.mt_learningrate;
 if strcmp(hemisphere, 'left')
-wm = t.lefttpc_fa;
+wm = t.lefttpc_r1;
 elseif strcmp(hemisphere, 'right')
-    wm = t.righttpc_fa;
+    wm = t.righttpc_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.lefttpc_fa t.righttpc_fa], 2);
+            wm = mean([t.lefttpc_r1 t.righttpc_r1], 2);
 end
 for r = 1:niter
     
@@ -248,11 +248,11 @@ clear beta_resampled
 %% Posterior Vertical Pathway -- tpc -- Recognition
 lr = t.rt_learningrate;
 if strcmp(hemisphere, 'left')
-wm = t.lefttpc_fa;
+wm = t.lefttpc_r1;
 elseif strcmp(hemisphere, 'right')
-    wm = t.righttpc_fa;
+    wm = t.righttpc_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.lefttpc_fa t.righttpc_fa], 2);
+            wm = mean([t.lefttpc_r1 t.righttpc_r1], 2);
 end
 for r = 1:niter
     
@@ -275,11 +275,11 @@ clear beta_resampled
 %% Posterior Vertical Pathway -- mdlfang -- Sensorimotor
 lr = t.mt_learningrate;
 if strcmp(hemisphere, 'left')
-wm = t.leftmdlfang_fa;
+wm = t.leftmdlfang_r1;
 elseif strcmp(hemisphere, 'right')
-    wm = t.rightmdlfang_fa;
+    wm = t.rightmdlfang_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.leftmdlfang_fa t.rightmdlfang_fa], 2);
+            wm = mean([t.leftmdlfang_r1 t.rightmdlfang_r1], 2);
 end
 for r = 1:niter
     
@@ -302,11 +302,11 @@ clear beta_resampled
 %% Posterior Vertical Pathway -- mdlfang -- Recognition
 lr = t.rt_learningrate;
 if strcmp(hemisphere, 'left')
-wm = t.leftmdlfang_fa;
+wm = t.leftmdlfang_r1;
 elseif strcmp(hemisphere, 'right')
-    wm = t.rightmdlfang_fa;
+    wm = t.rightmdlfang_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.leftmdlfang_fa t.rightmdlfang_fa], 2);
+            wm = mean([t.leftmdlfang_r1 t.rightmdlfang_r1], 2);
 end
 for r = 1:niter
     
@@ -329,11 +329,11 @@ clear beta_resampled
 %% Posterior Vertical Pathway -- mdlfspl -- Sensorimotor
 lr = t.mt_learningrate;
 if strcmp(hemisphere, 'left')
-wm = t.leftmdlfspl_fa;
+wm = t.leftmdlfspl_r1;
 elseif strcmp(hemisphere, 'right')
-    wm = t.rightmdlfspl_fa;
+    wm = t.rightmdlfspl_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.leftmdlfspl_fa t.rightmdlfspl_fa], 2);
+            wm = mean([t.leftmdlfspl_r1 t.rightmdlfspl_r1], 2);
 end
 for r = 1:niter
     
@@ -356,11 +356,11 @@ clear beta_resampled
 %% Posterior Vertical Pathway -- mdlfspl -- Recognition
 lr = t.rt_learningrate;
 if strcmp(hemisphere, 'left')
-wm = t.leftmdlfspl_fa;
+wm = t.leftmdlfspl_r1;
 elseif strcmp(hemisphere, 'right')
-    wm = t.rightmdlfspl_fa;
+    wm = t.rightmdlfspl_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.leftmdlfspl_fa t.rightmdlfspl_fa], 2);
+            wm = mean([t.leftmdlfspl_r1 t.rightmdlfspl_r1], 2);
 end
 for r = 1:niter
     
@@ -383,11 +383,11 @@ clear beta_resampled
 %% Ventral Horizontal Pathway -- ilf -- Sensorimotor
 lr = t.mt_learningrate;
 if strcmp(hemisphere, 'left')
-wm = t.leftilf_fa;
+wm = t.leftilf_r1;
 elseif strcmp(hemisphere, 'right')
-    wm = t.rightilf_fa;
+    wm = t.rightilf_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.leftilf_fa t.rightilf_fa], 2);
+            wm = mean([t.leftilf_r1 t.rightilf_r1], 2);
 end
 for r = 1:niter
     
@@ -410,11 +410,11 @@ clear beta_resampled
 %% Ventral Horizontal Pathway -- ilf -- Recognition
 lr = t.rt_learningrate;
 if strcmp(hemisphere, 'left')
-wm = t.leftilf_fa;
+wm = t.leftilf_r1;
 elseif strcmp(hemisphere, 'right')
-    wm = t.rightilf_fa;
+    wm = t.rightilf_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.leftilf_fa t.rightilf_fa], 2);
+            wm = mean([t.leftilf_r1 t.rightilf_r1], 2);
 end
 for r = 1:niter
     
@@ -437,11 +437,11 @@ clear beta_resampled
 %% Ventral Horizontal Pathway -- ifof -- Sensorimotor
 lr = t.mt_learningrate;
 if strcmp(hemisphere, 'left')
-wm = t.leftifof_fa;
+wm = t.leftifof_r1;
 elseif strcmp(hemisphere, 'right')
-    wm = t.rightifof_fa;
+    wm = t.rightifof_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.leftifof_fa t.rightifof_fa], 2);
+            wm = mean([t.leftifof_r1 t.rightifof_r1], 2);
 end
 for r = 1:niter
     
@@ -464,11 +464,11 @@ clear beta_resampled
 %% Ventral Horizontal Pathway -- ifof -- Recognition
 lr = t.rt_learningrate;
 if strcmp(hemisphere, 'left')
-wm = t.leftifof_fa;
+wm = t.leftifof_r1;
 elseif strcmp(hemisphere, 'right')
-    wm = t.rightifof_fa;
+    wm = t.rightifof_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.leftifof_fa t.rightifof_fa], 2);
+            wm = mean([t.leftifof_r1 t.rightifof_r1], 2);
 end
 for r = 1:niter
     
@@ -492,11 +492,11 @@ clear beta_resampled
 %% Dorsal Horizontal Pathway -- slf1and2 -- Sensorimotor
 lr = t.mt_learningrate;
 if strcmp(hemisphere, 'left')
-wm = t.leftslf1and2_fa;
+wm = t.leftslf1and2_r1;
 elseif strcmp(hemisphere, 'right')
-    wm = t.rightslf1and2_fa;
+    wm = t.rightslf1and2_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.leftslf1and2_fa t.rightslf1and2_fa], 2);
+            wm = mean([t.leftslf1and2_r1 t.rightslf1and2_r1], 2);
 end
 for r = 1:niter
     
@@ -519,11 +519,11 @@ clear beta_resampled
 %% Dorsal Horizontal Pathway -- slf1and2 -- Recognition
 lr = t.rt_learningrate;
 if strcmp(hemisphere, 'left')
-wm = t.leftslf1and2_fa;
+wm = t.leftslf1and2_r1;
 elseif strcmp(hemisphere, 'right')
-    wm = t.rightslf1and2_fa;
+    wm = t.rightslf1and2_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.leftslf1and2_fa t.rightslf1and2_fa], 2);
+            wm = mean([t.leftslf1and2_r1 t.rightslf1and2_r1], 2);
 end
 for r = 1:niter
     
@@ -546,11 +546,11 @@ clear beta_resampled
 %% Dorsal Horizontal Pathway -- slf3 -- Sensorimotor
 lr = t.mt_learningrate;
 if strcmp(hemisphere, 'left')
-wm = t.leftslf3_fa;
+wm = t.leftslf3_r1;
 elseif strcmp(hemisphere, 'right')
-    wm = t.rightslf3_fa;
+    wm = t.rightslf3_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.leftslf3_fa t.rightslf3_fa], 2);
+            wm = mean([t.leftslf3_r1 t.rightslf3_r1], 2);
 end
 for r = 1:niter
     
@@ -573,11 +573,11 @@ clear beta_resampled
 %% Dorsal Horizontal Pathway -- slf3 -- Recognition
 lr = t.rt_learningrate;
 if strcmp(hemisphere, 'left')
-wm = t.leftslf3_fa;
+wm = t.leftslf3_r1;
 elseif strcmp(hemisphere, 'right')
-    wm = t.rightslf3_fa;
+    wm = t.rightslf3_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.leftslf3_fa t.rightslf3_fa], 2);
+            wm = mean([t.leftslf3_r1 t.rightslf3_r1], 2);
 end
 for r = 1:niter
     
@@ -600,11 +600,11 @@ clear beta_resampled
 %% Frontal motor -- fat -- Sensorimotor
 lr = t.mt_learningrate;
 if strcmp(hemisphere, 'left')
-wm = t.leftfat_fa;
+wm = t.leftfat_r1;
 elseif strcmp(hemisphere, 'right')
-    wm = t.rightfat_fa;
+    wm = t.rightfat_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.leftfat_fa t.rightfat_fa], 2);
+            wm = mean([t.leftfat_r1 t.rightfat_r1], 2);
 end
 for r = 1:niter
     
@@ -627,11 +627,11 @@ clear beta_resampled
 %% Frontal Motor -- fat -- Recognition
 lr = t.rt_learningrate;
 if strcmp(hemisphere, 'left')
-wm = t.leftfat_fa;
+    wm = t.leftfat_r1;
 elseif strcmp(hemisphere, 'right')
-    wm = t.rightfat_fa;
+    wm = t.rightfat_r1;
 elseif strcmp(hemisphere, 'both')
-            wm = mean([t.leftfat_fa t.leftfat_fa], 2);
+            wm = mean([t.leftfat_r1 t.leftfat_r1], 2);
 end
 for r = 1:niter
     
@@ -751,7 +751,7 @@ xax.FontSize = fontsize;
 % yaxis
 yax = get(gca,'yaxis');
 yax.Limits = [-.5 1];
-yax.TickValues = [-1 -.5 0 .5 1];
+yax.TickValues = [-.5 0 .5 1];
 yax.TickDirection = 'out';
 % yax.TickLength = [yticklength yticklength];
 % yax.TickLabels = ylabels;

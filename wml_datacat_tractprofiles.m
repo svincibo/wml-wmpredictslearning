@@ -80,7 +80,7 @@ list_subs = unique(data.subjectID);
 list_tract = unique(data.structureID);
 
 % Get WM measurements for each tract (reorganizing so that each column is a tract).
-for w = 1:length(w_measures)
+for w = 1%:length(w_measures)
     
     wm_measure = w_measures{w};
     

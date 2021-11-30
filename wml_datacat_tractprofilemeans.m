@@ -8,7 +8,7 @@ clear all; close all; clc;
 
 rootdir = '/Volumes/Seagate/wml/wml-wmpredictslearning';
 blprojectid = 'proj-61609744fc8eb92cbcf82a5d';
-mp2rage = 'yes'; %no
+mp2rage = 'no'; %no
 
 % % Read in demographics data.
 % tdem = readtable(fullfile(rootdir, 'supportFiles/ping_combined_participantinformation.csv'));
@@ -351,8 +351,8 @@ if strcmp(mp2rage, 'no')
     end
     data_tractprofiles_mean = sortrows(d,'subID','ascend');
     
-    writetable(d, fullfile(rootdir, 'wml-wmpredictslearning-supportFiles', 'WML_mri_data_tractprofiles_nomp2rage_mean.csv'))
-    save(fullfile(rootdir, 'wml-wmpredictslearning-supportFiles', 'WML_mri_data_tractprofiles_nomp2rage.mat'), 'data_tractprofiles_mean')
+    writetable(d, fullfile(rootdir, 'wml-wmpredictslearning-supportFiles', 'wml_mri_data_tractprofiles_nomp2rage_mean.csv'))
+    save(fullfile(rootdir, 'wml-wmpredictslearning-supportFiles', 'wml_mri_data_tractprofiles_nomp2rage.mat'), 'data_tractprofiles_mean')
     
 elseif strcmp(mp2rage, 'yes')
     for f = 1:length(subfolders)-12
@@ -500,7 +500,7 @@ elseif strcmp(mp2rage, 'yes')
     
     data_tractprofiles_mean = sortrows(d,'subID','ascend');
     
-    writetable(d, fullfile(rootdir, 'wml-wmpredictslearning-supportFiles', 'WML_mri_data_tractprofiles_wmp2rage_mean.csv'))
-    save(fullfile(rootdir, 'wml-wmpredictslearning-supportFiles', 'WML_mri_data_tractprofiles_wmp2rage.mat'), 'data_tractprofiles_mean')
+    writetable(d, fullfile(rootdir, 'wml-wmpredictslearning-supportFiles', 'wml_mri_data_tractprofiles_wmp2rage_mean.csv'))
+    save(fullfile(rootdir, 'wml-wmpredictslearning-supportFiles', 'wml_mri_data_tractprofiles_wmp2rage.mat'), 'data_tractprofiles_mean')
     
 end
